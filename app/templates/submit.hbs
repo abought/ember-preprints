@@ -1,0 +1,17 @@
+<h1>Add preprint</h1>
+
+<div class="row">
+    <div class="col-md-3">
+         {{#bs-nav type="pills" stacked=true}}
+             {{#bs-nav-item}}{{#link-to "submit.project.index"}}Choose a project{{/link-to}}{{/bs-nav-item}}
+             {{#bs-nav-item}}{{#link-to "submit.project.upload"}}Select or upload a file{{/link-to}}{{/bs-nav-item}}
+             {{#bs-nav-item}}{{#link-to "submit.project.basics"}}Basic information{{/link-to}}{{/bs-nav-item}}
+             {{#bs-nav-item}}{{#link-to "submit.project.authors"}}Authors{{/link-to}}{{/bs-nav-item}}
+             {{#bs-nav-item}}{{#link-to "submit.project.submit"}}Submit preprint{{/link-to}}{{/bs-nav-item}}
+         {{/bs-nav}}
+    </div>
+    <div class="col-md-9">
+        {{outlet}}
+    </div>
+</div>
+
