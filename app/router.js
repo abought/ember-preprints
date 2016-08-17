@@ -16,7 +16,6 @@ Router.map(function() {
 
   this.route('browse');
 
-  this.route('page-not-found', { path: '/*wildcard' });
   this.route('submit', function() {
     this.route('project', { path: '/:node_id' }, function() {
       this.route('upload');
@@ -25,6 +24,8 @@ Router.map(function() {
       this.route('submit');
     });
   });
+
+  this.route('page-not-found', { path: '/*wildcard' });
 });
 
 export default Router;
