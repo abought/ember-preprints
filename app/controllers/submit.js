@@ -6,6 +6,8 @@ import permissions from 'ember-osf/const/permissions';
 import NodeActionsMixin from 'ember-osf/mixins/node-actions';
 import loadAll from 'ember-osf/utils/load-relationship';
 
+import taxonomyWithParent from '../utils/taxonomy-with-parent';
+
 // Enum of available upload states
 export const State = Object.freeze(Ember.Object.create({
     START: 'start',
@@ -142,78 +144,18 @@ export default Ember.Controller.extend(BasicsValidations, NodeActionsMixin, {
     /*
     * Subjects section: display taxonomy
     */
-    topFilter: '',
-    midFilter: '',
-    botFilter: '',
-    updateFilteredPath() {
-        var _this = this;
-        var overallPath = [];
-        var paths = this.get('path').slice(0, 2);
-        if (paths.length === 1) {
-            _this.get('store').query('taxonomy', { filter: { parent_ids: paths[0].id }, page: { size: 100 } }).then(results => {
-                Ember.set(paths[0], 'children', results.map(
-                    function(result) { return { name: result.get('text'), id: result.id }; }
-                ));
-                overallPath.push(paths[0]);
-                _this.set('filteredPath', overallPath);
-            });
-        } else if (paths.length === 2) {
-            _this.get('store').query('taxonomy', { filter: { parent_ids: paths[0].id }, page: { size: 100 } }).then(results => {
-                Ember.set(paths[0], 'children', results.map(
-                    function(result) { return { name: result.get('text'), id: result.id }; }
-                ));
-                overallPath.push(paths[0]);
-                _this.get('store').query('taxonomy', { filter: { parent_ids: paths[1].id }, page: { size: 100 } }).then(results => {
-                    Ember.set(paths[1], 'children', results.map(
-                        function(result) { return { name: result.get('text'), id: result.id }; }
-                    ));
-                    overallPath.push(paths[1]);
-                    _this.set('filteredPath', overallPath);
-                });
-            });
-        }
-    },
-    filteredPath: Ember.computed('path', function() {
-        this.updateFilteredPath();
-    }),
-    sortedTaxonomies: Ember.computed('taxonomies', function() {
-        var _this = this; // TODO: Unnecessary
-        this.get('store').query('taxonomy', { filter: { parent_ids: 'null' }, page: { size: 100 } }).then(results => {
-            _this.set('sortedTaxonomies', results.map(function (result) {
-                return {
-                    name: result.get('text'),
-                    id: result.get('id')
-                };
-            }));
-        });
-    }),
-    path: [],
-    /*
-    * selected takes the format of: { taxonomy: { category: { subject: {}, subject2: {}}, category2: {}}}
-    * in other words, each key is the name of one of the taxonomies, and each value is an object
-    * containing child values.
-    */
-    selected: new Ember.Object(),
-    /*
-    * sortedSelection takes the format of: [['taxonomy', 'category', 'subject'], ['taxonomy'...]]
-    * in other words, a 2D array
-    */
-    sortedSelection: Ember.computed('selected', function() {
-        const sorted = [];
-        const selected = this.get('selected');
-        const flatten = ([obj, name = []]) => {
-            const keys = Object.keys(obj);
-            if (keys.length === 0) {
-                return name.length !== 0 && sorted.pushObject(name);
-            } else {
-                return keys.sort()
-                .map(key => [obj.get(key), [...name, key]])
-                .forEach(flatten);
-            }
-        };
-        flatten([selected]);
-        return sorted;
-    }),
+    // TODO: Hardcode exactly three levels for now, generalize with different UI later
+    level0Filter: '',
+    level1Filter: '',
+    level2Filter: '',
+
+    _level0Subjects: Ember.A(),
+    _level1Subjects: Ember.A(),
+    _level2Subjects: Ember.A(),
+
+    level0Subjects: Ember.computed.filter('_level0Subjects'),
+    level1Subjects: 1,
+    level2Subjects: 1,
 
     actions: {
         // Open next panel
@@ -314,58 +256,22 @@ export default Ember.Controller.extend(BasicsValidations, NodeActionsMixin, {
         /*
         * Subject section
         */
-        deleteSubject(key, array = key.split('.')) {
-            // TODO: Taxonomies may go many levels deeper
-            this.set(key, null);
-            // Delete key manually
-            switch (array.length) {
-                case 2:
-                    delete this[array[0]][array[1]];
-                    break;
-                case 3:
-                    delete this[array[0]][array[1]][array[2]];
-                    break;
-                case 4:
-                    delete this[array[0]][array[1]][array[2]][array[3]];
-                    break;
-                default:
-                    console.error('deletion not implemented');
-            }
-        },
-        deselectSubject([...args]) {
-            args = args.filter(arg => Ember.typeOf(arg) === 'string');
-            this.send('deleteSubject', `selected.${args.join('.')}`, ['selected', ...args]);
-            this.notifyPropertyChange('selected');
-            this.rerender();
-        },
-        selectSubject(...args) {
-            const process = (prev, cur, i, arr) => {
-                const selected = this.get(`selected.${prev}`);
-                if (!selected) {
-                    // Create necessary parent objects and newly selected object
-                    this.set(`selected.${prev}`, new Ember.Object());
-                } else if (i === 3 || i === args.length && args.length === this.get('path').length &&
-                this.get('path').every((e, i) => e.name === args[i].name) &&
-                Object.keys(selected).length === 0) {
-                    // Deselecting a subject: if subject is last item in args,
-                    // its children are showing, and no children are selected
-                    this.send('deleteSubject', `selected.${prev}`, ['selected', ...arr.splice(0, i)]);
-                    args.popObject();
-                }
-                return `${prev}.${cur}`;
-            };
-            // Process past length of array
-            [...args.map(arg => arg.name || arg), ''].reduce(process);
-            this.set('path', args);
-            this.updateFilteredPath();
-            this.notifyPropertyChange('selected');
-            this.rerender();
-        },
 
+        /**
+         * Fetch the subjects associated with a given level of the hierarchy
+         * @param {Integer} levelNumber Integer representing level (0, 1, 2) of the hierarchy to fetch
+         * @param parent
+         */
+        fetchSubjects(levelNumber, parent) {
+            this.get('store').query('taxonomy', { filter: { parent_ids: null }, page: { size: 100 } })
+                .then(subjects => subjects.map((item) => taxonomyWithParent(item)))
+                .then(subjectWrappers => this.set(`level${levelNumber}Subjects`, subjectWrappers));
+        }
         saveSubjects() {
             // Update the temp preprint object with selected subjects, then advance. Nothing is actually saved here because preprint isn't created yet.
             //TODO implement: requires a datasource for IDs, not labels, of taxonomy items
             // If save fails, do not transition
+            let subjectNames = this.get('sortedSelected');
             this.set('model.subjects', this.get('selected'));
             this.send('next', this.get('_names.2'));
         },

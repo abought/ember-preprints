@@ -117,7 +117,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             <ul style="overflow: scroll">
-                                {{input value=topFilter class="form-control" placeholder="Search"}}
+                                {{input value=level0Filter class="form-control" placeholder="Search"}}
                                 {{#each sortedTaxonomies as |element|}}
                                     {{#if (if-filter element.name topFilter)}}
                                         <li {{action 'selectSubject' element}} class={{if (eq path.[0].name element.name) 'selected'}}>
@@ -130,7 +130,7 @@
 
                         <div class="col-md-4">
                             <ul style="overflow: scroll">
-                                {{input value=midFilter class="form-control" placeholder="Search"}}
+                                {{input value=level1Filter class="form-control" placeholder="Search"}}
                                 {{#with path.[0] as |taxonomy|}}
                                     {{#each filteredPath.[0].children as |element|}}
                                         {{#if (if-filter element.name midFilter)}}
@@ -145,7 +145,7 @@
 
                         <div class="col-md-4">
                             <ul style="overflow: scroll">
-                                {{input value=botFilter class="form-control" placeholder="Search"}}
+                                {{input value=level2Filter class="form-control" placeholder="Search"}}
                                 {{#with path.[0] as |taxonomy|}}
                                     {{#with path.[1] as |category|}}
                                         {{#each filteredPath.[1].children as |element|}}
