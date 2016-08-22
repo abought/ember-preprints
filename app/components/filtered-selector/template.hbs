@@ -1,0 +1,12 @@
+<ul style="overflow: scroll">
+    {{input value=_filterText class="form-control" placeholder="Search"}}
+    {{#each _displayChoices as |item|}}
+        <li {{action 'toggleSelect' item}} class={{if (eq item _selectedItem) 'selected'}}>
+            {{#if hasBlock}}
+                {{yield item}}
+            {{else}}
+                {{item}}
+            {{/if}}
+        </li>
+    {{/each}}
+</ul>

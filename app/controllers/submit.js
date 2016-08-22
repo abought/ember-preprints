@@ -215,6 +215,13 @@ export default Ember.Controller.extend(BasicsValidations, NodeActionsMixin, {
                 .catch(()=> this.send('error', 'Could not save information; please try again'));
         },
 
+        /*
+         * Subjects section
+         */
+
+        toggleSelectSubject(subjectItem) {
+            // TODO: Implement.
+        },
         saveSubjects(subjects) {
             // If save fails, do not transition
             this.set('model.subjects', subjects);

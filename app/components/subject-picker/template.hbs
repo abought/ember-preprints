@@ -13,12 +13,9 @@
 
     <div class="col-md-4">
         <ul style="overflow: scroll">
-            {{input value=tier1FilterText class="form-control" placeholder="Search"}}
-            {{#each tier1Display as |subject|}}
-                <li {{action 'select' subject '1'}} class={{if (eq subject selection1) 'selected'}}>
-                    {{subject.text}}
-                </li>
-            {{/each}}
+            {{#filtered-selector filterField='text' toggleAction={{action 'toggleSelectSubject'}} choices=_tier1 as |item|}}
+                {{item.text}}
+            {{/filtered-selector}}
         </ul>
     </div>
 
