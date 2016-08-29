@@ -31,7 +31,7 @@
             {{#unless fullScreenMFR}}
                 <div class="col-md-5"> {{!RIGHT SIDE COL}}
                     <div class="p-sm osf-box-lt" id="download_project">{{!SHARE ROW}}
-                        <a class="btn btn-primary" href={{activeFile.links.download}}>Download</a>
+                        <button class="btn btn-primary" {{action 'downloadFile' activeFile}}>Download</button>
                         <span class="p-sm pull-right">Downloads: {{activeFile.extra.downloads}}</span>
                         <span class="p-sm pull-right">
                             <p class="f-w-lg">

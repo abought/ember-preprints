@@ -29,8 +29,24 @@ export default Ember.Controller.extend({
         expandAuthors() {
             this.toggleProperty('expandedAuthors');
         },
+        /**
+         * Notify the parent view when a component selects a file
+         * @method chooseFile
+         * @param {File} fileItem
+         */
         chooseFile(fileItem) {
             this.set('activeFile', fileItem);
+        },
+        /**
+         * Update the UI for download count whenever a user chooses to download.
+         * @method incrDownload
+         * @param {File} fileItem
+         */
+        downloadFile(fileItem) {
+            // Because we're modifying a nested property, this value persists in store, but doesn't get set
+            fileItem.incrementProperty('extra.downloads', 1);
+            window.location = fileItem.get('links.download');
+
         }
     },
 });
